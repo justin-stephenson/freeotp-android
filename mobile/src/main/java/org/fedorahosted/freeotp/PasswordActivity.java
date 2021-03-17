@@ -1,5 +1,6 @@
 package org.fedorahosted.freeotp;
 
+import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.text.Editable;
@@ -14,6 +15,9 @@ import java.util.Locale;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.AppCompatEditText;
+
+import org.fedorahosted.freeotp.main.Activity;
+
 import me.gosimple.nbvcxz.Nbvcxz;
 import me.gosimple.nbvcxz.resources.Configuration;
 import me.gosimple.nbvcxz.resources.ConfigurationBuilder;
@@ -52,10 +56,21 @@ public class PasswordActivity extends AppCompatActivity {
     private ProgressBar mProgress;
     private TextInputLayout mPasswordLayout;
     private TextInputLayout mConfirmLayout;
+    private TokenPersistence mTokenBackup;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        try {
+            mTokenBackup = new TokenPersistence(getApplicationContext());
+            if (mTokenBackup.isProvisioned()) {
+                Intent myIntent = new Intent(PasswordActivity.this, Activity.class);
+                startActivity(myIntent);
+                finish();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         setContentView(R.layout.activity_password);
 
         mPassword = findViewById(R.id.password);
@@ -65,11 +80,20 @@ public class PasswordActivity extends AppCompatActivity {
         mPasswordLayout = findViewById(R.id.password_layout);
         mConfirmLayout = findViewById(R.id.confirm_layout);
 
-        mDone.setEnabled(true);
+        mDone.setEnabled(false);
         mDone.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                String password = mPassword.getText().toString();
 
+                try {
+                    mTokenBackup.provision(password);
+                } catch (Exception e){
+                    e.printStackTrace();
+                }
+                Intent myIntent = new Intent(PasswordActivity.this, Activity.class);
+                startActivity(myIntent);
+                finish();
             }
         });
 
@@ -96,7 +120,6 @@ public class PasswordActivity extends AppCompatActivity {
                     mEvaluator.cancel(true);
 
                 if (editable.toString().length() == 0) {
-                    mPasswordLayout.setPasswordVisibilityToggleEnabled(true);
                     mProgress.setVisibility(View.INVISIBLE);
                     return;
                 }
@@ -104,7 +127,6 @@ public class PasswordActivity extends AppCompatActivity {
                 mEvaluator = new Evaluator(getResources().getConfiguration().locale, new Evaluator.OnResultListener() {
                     @Override
                     public void onResult(Result result) {
-                        mPasswordLayout.setPasswordVisibilityToggleEnabled(true);
                         mProgress.setVisibility(View.INVISIBLE);
 
                         String error = getResources().getString(R.string.password_weak);
@@ -115,7 +137,6 @@ public class PasswordActivity extends AppCompatActivity {
                     }
                 });
 
-                mPasswordLayout.setPasswordVisibilityToggleEnabled(false);
                 mProgress.setVisibility(View.VISIBLE);
 
                 mEvaluator.execute(editable.toString());
