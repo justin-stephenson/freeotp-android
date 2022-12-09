@@ -23,6 +23,7 @@ package org.fedorahosted.freeotp.main;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.ObjectAnimator;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AccelerateDecelerateInterpolator;
@@ -48,6 +49,7 @@ class ViewHolder extends RecyclerView.ViewHolder {
         void onActivated(ViewHolder holder);
         void onShare(String code);
     }
+    private static final String LOGTAG = "Adapter";
 
     private EventListener mEventListener;
     private ObjectAnimator mCountdown;
@@ -119,10 +121,13 @@ class ViewHolder extends RecyclerView.ViewHolder {
     }
 
     private void displayCode(Code code, Token.Type type, int animationDuration) {
-        if (code == null)
+        if (code == null) {
+            Log.i(LOGTAG, String.format("code == null"));
             return;
+        }
 
         String text = code.getCode();
+        Log.i(LOGTAG, String.format("displaying Code: [%s]", text));
         /* Add spaces for readability */
         for (int segment : new int[] { 7, 5, 4, 3 }) {
             if (text.length() % segment != 0)
@@ -191,13 +196,16 @@ class ViewHolder extends RecyclerView.ViewHolder {
             @Override
             public void onAnimationStart(Animator animation) {
                 super.onAnimationStart(animation);
+
                 /* Fade in */
+                Log.i(LOGTAG, String.format("onAnimationStart: fade"));
                 fade(mPassive, false, 500);
                 fade(mActive, true, 500);
             }
 
             @Override
             public void onAnimationEnd(Animator animation) {
+                Log.i(LOGTAG, String.format("onAnimationEnd: fade"));
                 /* Fade out */
                 fade(mPassive, true, 500);
                 fade(mActive, false, 500);
@@ -217,6 +225,8 @@ class ViewHolder extends RecyclerView.ViewHolder {
         mImageActive.setVisibility(selected ? View.INVISIBLE : View.VISIBLE);
         mCheck.setVisibility(selected ? View.VISIBLE : View.INVISIBLE);
         mCheckActive.setVisibility(selected ? View.VISIBLE : View.INVISIBLE);
+        Log.i(LOGTAG, String.format("mImage [%s][%s]", mImage.getVisibility(), mImageActive.getVisibility()));
+        Log.i(LOGTAG, String.format("mCheck [%s][%s]", mCheck.getVisibility(), mCheck.getVisibility()));
     }
 
     void reset() {
@@ -224,10 +234,13 @@ class ViewHolder extends RecyclerView.ViewHolder {
     }
 
     void bind(Token token, int color, int image_id, String image_url, Code code, boolean selected, Token.Type type) {
+        Log.i(LOGTAG, String.format("Binding token [%s][%s]", token.getIssuer(), token.getLabel()));
+
         String issuer = token.getIssuer();
         if (issuer == null)
             issuer = mView.getResources().getString(R.string.unknown_issuer);
 
+        Log.i(LOGTAG, String.format("bind: setVisibility"));
         mLock.setVisibility(token.getLock() ? View.VISIBLE : View.GONE);
         mIssuer.setText(issuer);
         mLabel.setText(token.getLabel());
@@ -242,6 +255,7 @@ class ViewHolder extends RecyclerView.ViewHolder {
             Picasso.get().load(image_url).error(image_id).into(mImageActive);
         }
 
+        Log.i(LOGTAG, String.format("bind: setSelected"));
         setSelected(selected);
         if (code != null) {
             displayCode(code, type, 0);

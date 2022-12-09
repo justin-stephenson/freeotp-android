@@ -132,14 +132,18 @@ public class Activity extends AppCompatActivity
         };
 
     private void onActivate(ViewHolder vh) {
+        Log.i(LOGTAG, String.format("onActivate:"));
         try {
+            Log.i(LOGTAG, String.format("onActivate: adapter.getCode()"));
             Code code = mTokenAdapter.getCode(vh.getAdapterPosition());
+            Log.i(LOGTAG, String.format("onActivate: get AUTO_COPY_CLIPBOARD value()"));
             if (mSettings.getBoolean(AUTO_COPY_CLIPBOARD, false)) {
                 ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
                 ClipData clip = ClipData.newPlainText("code", code.getCode());
                 clipboard.setPrimaryClip(clip);
             }
 
+            Log.i(LOGTAG, String.format("onActivate: getTokenType"));
             Token.Type type = mTokenAdapter.getTokenType(vh.getAdapterPosition());
             vh.displayCode(code, type);
 
